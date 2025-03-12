@@ -1,7 +1,21 @@
-import { useQuery } from "@tanstack/react-query";
-import { Order } from "@shared/schema";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { Order, Category, insertCategorySchema } from "@shared/schema";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Form, FormField, FormItem, FormLabel, FormControl } from "@/components/ui/form";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import {
   BarChart,
   Bar,
@@ -14,12 +28,45 @@ import {
   Tooltip,
   Legend,
 } from "recharts";
+import { Plus, Trash2 } from "lucide-react";
 import { useMemo } from "react";
 import { format, subDays } from "date-fns";
 
 export default function AdminDashboard() {
-  const { data: orders, isLoading } = useQuery<Order[]>({
+  const { toast } = useToast();
+  const { data: orders, isLoading: ordersLoading } = useQuery<Order[]>({
     queryKey: ["/api/orders"],
+  });
+
+  const { data: categories, isLoading: categoriesLoading } = useQuery<Category[]>({
+    queryKey: ["/api/categories"],
+  });
+
+  const createCategoryMutation = useMutation({
+    mutationFn: async (data: { name: string }) => {
+      const res = await apiRequest("POST", "/api/categories", data);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
+      toast({
+        title: "Category created",
+        description: "The category has been created successfully.",
+      });
+    },
+  });
+
+  const deleteCategoryMutation = useMutation({
+    mutationFn: async (id: number) => {
+      await apiRequest("DELETE", `/api/categories/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
+      toast({
+        title: "Category deleted",
+        description: "The category has been deleted successfully.",
+      });
+    },
   });
 
   const stats = useMemo(() => {
@@ -64,7 +111,14 @@ export default function AdminDashboard() {
     };
   }, [orders]);
 
-  if (isLoading || !stats) {
+  const form = useForm({
+    resolver: zodResolver(insertCategorySchema),
+    defaultValues: {
+      name: "",
+    },
+  });
+
+  if (ordersLoading || categoriesLoading || !stats) {
     return (
       <div className="space-y-6">
         <h1 className="text-3xl font-bold">Dashboard</h1>
@@ -166,6 +220,66 @@ export default function AdminDashboard() {
           </CardContent>
         </Card>
       </div>
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle>Category Management</CardTitle>
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button size="sm">
+                <Plus className="h-4 w-4 mr-2" />
+                Add Category
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Add New Category</DialogTitle>
+              </DialogHeader>
+              <Form {...form}>
+                <form
+                  onSubmit={form.handleSubmit((data) => createCategoryMutation.mutate(data))}
+                  className="space-y-4"
+                >
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Category Name</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <Button type="submit" className="w-full">
+                    Create Category
+                  </Button>
+                </form>
+              </Form>
+            </DialogContent>
+          </Dialog>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2">
+            {categories?.map((category) => (
+              <div
+                key={category.id}
+                className="flex items-center justify-between p-2 border rounded"
+              >
+                <span>{category.name}</span>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => deleteCategoryMutation.mutate(category.id)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

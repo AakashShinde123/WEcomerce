@@ -2,6 +2,11 @@ import { pgTable, text, serial, integer, boolean, jsonb, timestamp, numeric } fr
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
+export const categories = pgTable("categories", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull().unique(),
+});
+
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
@@ -35,6 +40,13 @@ export const orders = pgTable("orders", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+export const cart = pgTable("cart", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  items: jsonb("items").notNull(),
+  total: numeric("total").notNull(),
+});
+
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
@@ -46,11 +58,15 @@ export const insertUserSchema = createInsertSchema(users).pick({
 
 export const insertProductSchema = createInsertSchema(products);
 export const insertOrderSchema = createInsertSchema(orders);
+export const insertCategorySchema = createInsertSchema(categories);
+export const insertCartSchema = createInsertSchema(cart);
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type Product = typeof products.$inferSelect;
 export type Order = typeof orders.$inferSelect;
+export type Category = typeof categories.$inferSelect;
+export type Cart = typeof cart.$inferSelect;
 
 export const orderItemSchema = z.object({
   productId: z.number(),

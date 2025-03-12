@@ -188,7 +188,6 @@ function RegisterForm() {
                 </FormControl>
                 <SelectContent>
                   <SelectItem value="user">Customer</SelectItem>
-                  <SelectItem value="admin">Administrator</SelectItem>
                   <SelectItem value="delivery">Delivery Partner</SelectItem>
                 </SelectContent>
               </Select>

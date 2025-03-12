@@ -1,13 +1,39 @@
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import { Product } from "@shared/schema";
 import ProductGrid from "@/components/products/product-grid";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { Search } from "lucide-react";
+
+const CATEGORIES = [
+  "All",
+  "Fruits & Vegetables",
+  "Dairy & Eggs",
+  "Grocery & Staples",
+  "Beverages",
+  "Snacks & Packaged Foods",
+  "Personal Care",
+  "Baby Care",
+  "Home Essentials",
+];
 
 export default function HomePage() {
   const { toast } = useToast();
+  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [searchQuery, setSearchQuery] = useState("");
+
   const { data: products, isLoading } = useQuery<Product[]>({
     queryKey: ["/api/products"],
+  });
+
+  const filteredProducts = products?.filter((product) => {
+    const matchesCategory = selectedCategory === "All" || product.category === selectedCategory;
+    const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      product.description.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesCategory && matchesSearch;
   });
 
   const handleAddToCart = (product: Product) => {
@@ -20,7 +46,14 @@ export default function HomePage() {
   if (isLoading) {
     return (
       <div>
-        <h1 className="text-3xl font-bold mb-8">Fresh Groceries</h1>
+        <div className="space-y-4 mb-8">
+          <Skeleton className="h-12 w-full" />
+          <div className="flex gap-2 overflow-x-auto pb-2">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <Skeleton key={i} className="h-10 w-24 flex-shrink-0" />
+            ))}
+          </div>
+        </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {Array.from({ length: 8 }).map((_, i) => (
             <div key={i} className="space-y-4">
@@ -36,11 +69,42 @@ export default function HomePage() {
   }
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">Fresh Groceries</h1>
+    <div className="space-y-6">
+      <div className="relative">
+        <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Search products..."
+          className="pl-10"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
       </div>
-      <ProductGrid products={products || []} onAddToCart={handleAddToCart} />
+
+      <div className="flex gap-2 overflow-x-auto pb-2">
+        {CATEGORIES.map((category) => (
+          <Button
+            key={category}
+            variant={selectedCategory === category ? "default" : "outline"}
+            className="flex-shrink-0"
+            onClick={() => setSelectedCategory(category)}
+          >
+            {category}
+          </Button>
+        ))}
+      </div>
+
+      <div>
+        <h2 className="text-2xl font-bold mb-4">
+          {selectedCategory === "All" ? "All Products" : selectedCategory}
+        </h2>
+        {filteredProducts?.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">
+            No products found. Try adjusting your filters.
+          </div>
+        ) : (
+          <ProductGrid products={filteredProducts || []} onAddToCart={handleAddToCart} />
+        )}
+      </div>
     </div>
   );
 }

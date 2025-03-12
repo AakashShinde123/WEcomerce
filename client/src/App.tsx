@@ -3,6 +3,7 @@ import { Switch, Route } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from "./hooks/use-auth";
+import { CartProvider } from "./hooks/use-cart";
 import { ProtectedRoute } from "./lib/protected-route";
 
 import NotFound from "@/pages/not-found";
@@ -17,31 +18,31 @@ function Router() {
   return (
     <Switch>
       <Route path="/auth" component={AuthPage} />
-      
+
       <ProtectedRoute path="/" component={() => (
         <MainLayout>
           <HomePage />
         </MainLayout>
       )} />
-      
+
       <ProtectedRoute path="/admin" component={() => (
         <MainLayout>
           <AdminDashboard />
         </MainLayout>
       )} />
-      
+
       <ProtectedRoute path="/admin/products" component={() => (
         <MainLayout>
           <AdminProducts />
         </MainLayout>
       )} />
-      
+
       <ProtectedRoute path="/delivery" component={() => (
         <MainLayout>
           <DeliveryTasks />
         </MainLayout>
       )} />
-      
+
       <Route component={NotFound} />
     </Switch>
   );
@@ -51,8 +52,10 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <Router />
-        <Toaster />
+        <CartProvider>
+          <Router />
+          <Toaster />
+        </CartProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

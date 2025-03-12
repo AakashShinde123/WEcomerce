@@ -6,6 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { useCart } from "@/hooks/use-cart";
 import { Search } from "lucide-react";
 
 const CATEGORIES = [
@@ -22,6 +23,7 @@ const CATEGORIES = [
 
 export default function HomePage() {
   const { toast } = useToast();
+  const { addToCart } = useCart();
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -37,6 +39,7 @@ export default function HomePage() {
   });
 
   const handleAddToCart = (product: Product) => {
+    addToCart(product);
     toast({
       title: "Added to cart",
       description: `${product.name} has been added to your cart.`,

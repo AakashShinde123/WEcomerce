@@ -1,13 +1,14 @@
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
+import { CartDrawer } from "@/components/cart/cart-drawer";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ShoppingCart, User, LogOut, Package, Home, ChevronDown } from "lucide-react";
+import { User, LogOut, Package, Home, ChevronDown } from "lucide-react";
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -61,9 +62,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
                     Home
                   </Button>
                 </Link>
-                <Button variant="outline">
-                  <ShoppingCart className="h-4 w-4" />
-                </Button>
+                <CartDrawer />
               </>
             )}
 

@@ -8,6 +8,15 @@ import { insertProductSchema, orderItemSchema, insertCategorySchema } from "@sha
 export async function registerRoutes(app: Express): Promise<Server> {
   setupAuth(app);
 
+  // Add delivery partners route
+  app.get("/api/delivery-partners", async (req, res) => {
+    if (req.user?.role !== "admin") {
+      return res.status(403).send("Unauthorized");
+    }
+    const partners = await storage.getDeliveryPartners();
+    res.json(partners);
+  });
+
   // Category routes
   app.get("/api/categories", async (_req, res) => {
     const categories = await storage.getCategories();
@@ -86,7 +95,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     // Find available delivery partner
     const deliveryPartners = await storage.getDeliveryPartners();
     const availablePartner = deliveryPartners.find(partner => {
-      const activeOrders = partner.orders?.filter(o => 
+      const activeOrders = partner.orders?.filter(o =>
         o.status === "assigned" || o.status === "delivering"
       );
       return !activeOrders || activeOrders.length < 3;

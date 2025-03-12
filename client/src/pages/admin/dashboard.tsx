@@ -1,5 +1,5 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Order, Category, insertCategorySchema } from "@shared/schema";
+import { Order, Category, insertCategorySchema, User } from "@shared/schema";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -31,6 +31,14 @@ import {
 import { Plus, Trash2 } from "lucide-react";
 import { useMemo } from "react";
 import { format, subDays } from "date-fns";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
 
 export default function AdminDashboard() {
   const { toast } = useToast();
@@ -42,29 +50,23 @@ export default function AdminDashboard() {
     queryKey: ["/api/categories"],
   });
 
-  const createCategoryMutation = useMutation({
-    mutationFn: async (data: { name: string }) => {
-      const res = await apiRequest("POST", "/api/categories", data);
+  const { data: deliveryPartners } = useQuery<User[]>({
+    queryKey: ["/api/delivery-partners"],
+  });
+
+  const assignDeliveryMutation = useMutation({
+    mutationFn: async ({ orderId, partnerId }: { orderId: number; partnerId: number }) => {
+      const res = await apiRequest("PATCH", `/api/orders/${orderId}/status`, {
+        status: "assigned",
+        deliveryPartnerId: partnerId,
+      });
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
       toast({
-        title: "Category created",
-        description: "The category has been created successfully.",
-      });
-    },
-  });
-
-  const deleteCategoryMutation = useMutation({
-    mutationFn: async (id: number) => {
-      await apiRequest("DELETE", `/api/categories/${id}`);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
-      toast({
-        title: "Category deleted",
-        description: "The category has been deleted successfully.",
+        title: "Delivery partner assigned",
+        description: "The order has been assigned successfully.",
       });
     },
   });
@@ -275,6 +277,61 @@ export default function AdminDashboard() {
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>Recent Orders</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {orders?.map((order) => (
+              <div
+                key={order.id}
+                className="flex items-center justify-between p-4 border rounded-lg"
+              >
+                <div>
+                  <div className="font-semibold">Order #{order.id}</div>
+                  <div className="text-sm text-muted-foreground">
+                    Status: {order.status} | Total: ₹{Number(order.total).toFixed(2)}
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    Items: {(order.items as any[]).length} | Address: {order.address}
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  {order.status === "pending" && (
+                    <Select
+                      onValueChange={(value) =>
+                        assignDeliveryMutation.mutate({
+                          orderId: order.id,
+                          partnerId: parseInt(value),
+                        })
+                      }
+                    >
+                      <SelectTrigger className="w-[200px]">
+                        <SelectValue placeholder="Assign delivery partner" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {deliveryPartners?.map((partner) => (
+                          <SelectItem key={partner.id} value={partner.id.toString()}>
+                            {partner.fullName}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                  {order.deliveryPartnerId && (
+                    <div className="text-sm">
+                      Assigned to: {
+                        deliveryPartners?.find(p => p.id === order.deliveryPartnerId)?.fullName
+                      }
+                    </div>
+                  )}
+                </div>
               </div>
             ))}
           </div>

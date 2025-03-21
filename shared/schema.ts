@@ -1,7 +1,6 @@
-import { pgTable, text, serial, integer, boolean, jsonb, timestamp, numeric } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, jsonb, timestamp, numeric, text as file } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
-import { z } from "zod";
-
+import { object, z } from "zod";
 export const categories = pgTable("categories", {
   id: serial("id").primaryKey(),
   name: text("name").notNull().unique(),
@@ -21,10 +20,20 @@ export const products = pgTable("products", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   description: text("description").notNull(),
-  price: numeric("price").notNull(),
-  image: text("image").notNull(),
+  price: integer("price").notNull(), // Expects a number
+  stock: integer("stock").notNull().default(0), // Expects a number
   category: text("category").notNull(),
-  stock: integer("stock").notNull().default(0),
+  image: text("image").notNull(), // Ensure the image column is included
+});
+
+// Zod schema for validation
+export const insertProductSchema = createInsertSchema(products).extend({
+  name: z.string().min(1, 'Name must contain at least 1 character'),
+  description: z.string().min(1, 'Description must contain at least 1 character'),
+  price: z.number().min(1, 'Price must be greater than 0'),
+  stock: z.number().min(0, 'Stock must be greater than or equal to 0'),
+  category: z.string().min(1, 'Category must contain at least 1 character'),
+  image: z.string().url('Image must be a valid URL'),
 });
 
 export const orders = pgTable("orders", {
@@ -47,16 +56,7 @@ export const cart = pgTable("cart", {
   total: numeric("total").notNull(),
 });
 
-export const insertUserSchema = createInsertSchema(users).pick({
-  username: true,
-  password: true,
-  fullName: true,
-  role: true,
-  address: true,
-  phone: true,
-});
-
-export const insertProductSchema = createInsertSchema(products);
+export const insertUserSchema = createInsertSchema(users);
 export const insertOrderSchema = createInsertSchema(orders);
 export const insertCategorySchema = createInsertSchema(categories);
 export const insertCartSchema = createInsertSchema(cart);

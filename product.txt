@@ -16,7 +16,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Plus, Trash2 } from "lucide-react";
+import { Loader2, Plus, Trash2, Settings } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,7 +28,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import React from 'react';
 
 export default function AdminProducts() {
   const { toast } = useToast();
@@ -45,7 +44,7 @@ export default function AdminProducts() {
 
   // Create product mutation
   const createProductMutation = useMutation({
-    mutationFn: async (data: Omit<Product, 'id'>) => {
+    mutationFn: async (data: Product) => {
       const res = await apiRequest("POST", "/api/products", data);
       return res.json();
     },
@@ -54,14 +53,6 @@ export default function AdminProducts() {
       toast({
         title: "Product created",
         description: "The product has been created successfully.",
-      });
-    },
-    onError: (error) => {
-      console.error("Error creating product:", error); // Log the error
-      toast({
-        title: "Error",
-        description: "Failed to create product. Please try again.",
-        variant: "destructive",
       });
     },
   });
@@ -169,7 +160,7 @@ function ProductForm({
   onSubmit,
   categories,
 }: {
-  onSubmit: (data: Omit<Product, 'id'>) => void;
+  onSubmit: (data: Product) => void;
   categories: Category[];
 }) {
   const form = useForm({
@@ -186,15 +177,7 @@ function ProductForm({
 
   return (
     <Form {...form}>
-      <form
-        onSubmit={form.handleSubmit((data) => {
-          console.log("Form Data:", data); // Log the form data
-          onSubmit(data);
-        }, (errors) => {
-          console.log("Form Errors:", errors); // Log form errors
-        })}
-        className="space-y-4"
-      >
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <FormField
           control={form.control}
           name="name"

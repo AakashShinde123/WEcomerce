@@ -1,25 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { Product } from "@shared/schema";
+import { Product, Category } from "@shared/schema";
 import ProductGrid from "@/components/products/product-grid";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useCart } from "@/hooks/use-cart";
-import { Search } from "lucide-react";
-
-const CATEGORIES = [
-  "All",
-  "Fruits & Vegetables",
-  "Dairy & Eggs",
-  "Grocery & Staples",
-  "Beverages",
-  "Snacks & Packaged Foods",
-  "Personal Care",
-  "Baby Care",
-  "Home Essentials",
-];
+import { Search, ShoppingCart } from "lucide-react";
 
 export default function HomePage() {
   const { toast } = useToast();
@@ -27,8 +15,12 @@ export default function HomePage() {
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
 
-  const { data: products, isLoading } = useQuery<Product[]>({
+  const { data: products, isLoading: productsLoading } = useQuery<Product[]>({
     queryKey: ["/api/products"],
+  });
+
+  const { data: categories, isLoading: categoriesLoading } = useQuery<Category[]>({
+    queryKey: ["/api/categories"],
   });
 
   const filteredProducts = products?.filter((product) => {
@@ -46,7 +38,7 @@ export default function HomePage() {
     });
   };
 
-  if (isLoading) {
+  if (productsLoading || categoriesLoading) {
     return (
       <div>
         <div className="space-y-4 mb-8">
@@ -84,14 +76,21 @@ export default function HomePage() {
       </div>
 
       <div className="flex gap-2 overflow-x-auto pb-2">
-        {CATEGORIES.map((category) => (
+        <Button
+          variant={selectedCategory === "All" ? "default" : "outline"}
+          className="flex-shrink-0"
+          onClick={() => setSelectedCategory("All")}
+        >
+          All
+        </Button>
+        {categories?.map((category) => (
           <Button
-            key={category}
-            variant={selectedCategory === category ? "default" : "outline"}
+            key={category.id}
+            variant={selectedCategory === category.name ? "default" : "outline"}
             className="flex-shrink-0"
-            onClick={() => setSelectedCategory(category)}
+            onClick={() => setSelectedCategory(category.name)}
           >
-            {category}
+            {category.name}
           </Button>
         ))}
       </div>
@@ -107,6 +106,18 @@ export default function HomePage() {
         ) : (
           <ProductGrid products={filteredProducts || []} onAddToCart={handleAddToCart} />
         )}
+      </div>
+
+      <div className="fixed bottom-4 right-4">
+        <Button
+          size="lg"
+          className="rounded-full p-3"
+          onClick={() => {
+            // Navigate to cart or open cart modal
+          }}
+        >
+          <ShoppingCart className="h-6 w-6" />
+        </Button>
       </div>
     </div>
   );

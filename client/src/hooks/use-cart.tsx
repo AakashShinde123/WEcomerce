@@ -30,10 +30,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const { data: cartData } = useQuery({
     queryKey: ["/api/cart"],
-    onSuccess: (data) => {
+    queryFn: async () => {
+      const res = await apiRequest("GET", "/api/cart");
+      return res.json();
+    },
+    select: (data) => {
       if (data?.items) {
         setItems(data.items);
       }
+      return data;
     },
   });
 

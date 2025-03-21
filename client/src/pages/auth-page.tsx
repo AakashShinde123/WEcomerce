@@ -36,7 +36,7 @@ export default function AuthPage() {
               </TabsList>
 
               <TabsContent value="login">
-                <LoginForm />
+                <LoginForm errorMessage={loginMutation.error?.message} />
               </TabsContent>
 
               <TabsContent value="register">
@@ -50,13 +50,13 @@ export default function AuthPage() {
       <div className="hidden md:block bg-gradient-to-br from-primary/90 to-primary p-8">
         <div className="h-full flex flex-col justify-center text-white max-w-lg mx-auto">
           <h1 className="text-4xl font-bold mb-6">
-            Grocery Delivery Made Simple
+            Sweets and grocery Delivery Made Simple
           </h1>
           <p className="text-lg opacity-90 mb-8">
             Get fresh groceries delivered to your doorstep in minutes. Join Sudhamrit today for the fastest grocery delivery service in your area.
           </p>
           <img
-            src="https://images.unsplash.com/photo-1584680226833-0d680d0a0794"
+            src="public/img/1.png"
             alt="Fresh groceries"
             className="rounded-lg shadow-xl"
           />
@@ -66,7 +66,7 @@ export default function AuthPage() {
   );
 }
 
-function LoginForm() {
+function LoginForm({ errorMessage }: { errorMessage?: string }) {
   const { loginMutation } = useAuth();
   const form = useForm({
     defaultValues: {
@@ -106,6 +106,7 @@ function LoginForm() {
           )}
         />
 
+        {errorMessage && <p className="text-red-500">{errorMessage}</p>}
         <Button type="submit" className="w-full" disabled={loginMutation.isPending}>
           {loginMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           Login
@@ -215,7 +216,6 @@ function RegisterForm() {
           name="address"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Address</FormLabel>
               <FormControl>
                 <Input {...field} />
               </FormControl>
